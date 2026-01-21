@@ -1,0 +1,247 @@
+// Prisma schema for Mindful CMS
+// Multi-tenant blog platform with analytics
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============== User & Auth ==============
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         String   @default("OWNER") // OWNER | EDITOR
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  blogs         Blog[]
+  posts         Post[]
+  authorProfile AuthorProfile?
+  likes         Like[]
+  bookmarks     Bookmark[]
+  following     Follow[]       @relation("Follower")
+  followers     Follow[]       @relation("Following")
+  refreshTokens RefreshToken[]
+  readTimeLogs  ReadTimeLog[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model AuthorProfile {
+  id        String  @id @default(cuid())
+  userId    String  @unique
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio       String?
+  location  String?
+  avatarUrl String?
+  website   String?
+  twitter   String?
+  github    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("author_profiles")
+}
+
+// ============== Blog (Tenant) ==============
+
+model Blog {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  description String?
+  logoUrl     String?
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  posts      Post[]
+  categories Category[]
+  tags       Tag[]
+
+  @@index([ownerId])
+  @@map("blogs")
+}
+
+// ============== Content ==============
+
+model Post {
+  id            String    @id @default(cuid())
+  slug          String
+  title         String
+  content       String
+  excerpt       String?
+  coverImageUrl String?
+  featured      Boolean   @default(false)
+  readTimeMinutes Int      @default(0)
+  status        String    @default("DRAFT") // DRAFT | PUBLISHED | ARCHIVED
+  publishedAt   DateTime?
+  seoTitle      String?
+  seoDescription String?
+  
+  blogId   String
+  blog     Blog   @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  categories PostCategory[]
+  tags       PostTag[]
+  likes      Like[]
+  bookmarks  Bookmark[]
+  readTimeLogs ReadTimeLog[]
+
+  @@unique([blogId, slug])
+  @@index([blogId])
+  @@index([authorId])
+  @@index([status])
+  @@map("posts")
+}
+
+model Category {
+  id          String  @id @default(cuid())
+  slug        String
+  name        String
+  description String?
+  parentId    String?
+  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
+  
+  blogId String
+  blog   Blog   @relation(fields: [blogId], references: [id], onDelete: Cascade)
+
+  posts PostCategory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([blogId, slug])
+  @@index([blogId])
+  @@map("categories")
+}
+
+model Tag {
+  id   String @id @default(cuid())
+  slug String
+  name String
+
+  blogId String
+  blog   Blog   @relation(fields: [blogId], references: [id], onDelete: Cascade)
+
+  posts PostTag[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([blogId, slug])
+  @@index([blogId])
+  @@map("tags")
+}
+
+// ============== Post Relations ==============
+
+model PostCategory {
+  postId     String
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([postId, categoryId])
+  @@map("post_categories")
+}
+
+model PostTag {
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tagId  String
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+  @@map("post_tags")
+}
+
+// ============== Interactions ==============
+
+model Like {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guestIp   String?  // For anonymous likes
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId])
+  @@unique([postId, guestIp])
+  @@index([postId])
+  @@map("likes")
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId])
+  @@index([userId])
+  @@map("bookmarks")
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  follower    User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@index([followingId])
+  @@map("follows")
+}
+
+// ============== Analytics ==============
+
+model ReadTimeLog {
+  id            String   @id @default(cuid())
+  postId        String
+  post          Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  blogId        String
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId     String?  // For anonymous tracking
+  readTimeSeconds Int
+  createdAt     DateTime @default(now())
+
+  @@index([postId])
+  @@index([blogId])
+  @@index([userId])
+  @@map("read_time_logs")
+}

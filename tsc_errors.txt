@@ -1,0 +1,2 @@
+src/infrastructure/repositories/post.repository.ts(204,13): error TS2322: Type 'true' is not assignable to type 'never'.
+src/infrastructure/repositories/post.repository.ts(225,13): error TS2322: Type 'true' is not assignable to type 'never'.
