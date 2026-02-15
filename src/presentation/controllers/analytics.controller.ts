@@ -39,6 +39,18 @@ export class AnalyticsController {
         const dashboard = await analyticsUseCases.getAuthorDashboard(userId);
         res.json(dashboard);
     }
+
+    async getDashboardStats(req: Request, res: Response): Promise<void> {
+        const userId = req.user!.userId;
+        const stats = await analyticsUseCases.getDashboardStats(userId);
+        res.json(stats);
+    }
+
+    async getDashboardActivities(req: Request, res: Response): Promise<void> {
+        const userId = req.user!.userId;
+        const activities = await analyticsUseCases.getDashboardActivities(userId);
+        res.json(activities);
+    }
 }
 
 export const analyticsController = new AnalyticsController();

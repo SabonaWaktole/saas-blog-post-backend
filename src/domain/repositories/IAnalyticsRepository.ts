@@ -4,7 +4,8 @@ import {
     CreateReadTimeLogInput,
     PostAnalytics,
     BlogAnalytics,
-    AuthorDashboardAnalytics
+    AuthorDashboardAnalytics,
+    Activity
 } from '../entities/Analytics';
 
 export interface IAnalyticsRepository {
@@ -19,4 +20,7 @@ export interface IAnalyticsRepository {
 
     // Author dashboard (cross-blog)
     getAuthorDashboard(userId: string): Promise<AuthorDashboardAnalytics>;
+
+    // Activity feed
+    getAuthorActivities(userId: string): Promise<Activity[]>;
 }

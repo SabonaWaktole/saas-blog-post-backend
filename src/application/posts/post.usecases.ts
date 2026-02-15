@@ -180,6 +180,13 @@ export class PostUseCases {
         return postRepository.findPublishedByBlogId(blogId, options);
     }
 
+    async listAllPublished(
+        options: PaginationOptions,
+        filters?: PostFilterOptions
+    ): Promise<PaginatedResult<PostWithCounts>> {
+        return postRepository.findAllPublished(options, filters);
+    }
+
     async getRelatedPosts(postId: string, limit: number = 5): Promise<PostWithCounts[]> {
         return postRepository.getRelatedPosts(postId, limit);
     }

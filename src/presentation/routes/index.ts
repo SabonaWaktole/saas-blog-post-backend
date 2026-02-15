@@ -67,6 +67,7 @@ router.delete('/posts/:id', authMiddleware, asyncHandler(postController.delete.b
 router.get('/posts/:id/related', asyncHandler(postController.getRelated.bind(postController)));
 
 // Public routes
+router.get('/public/posts', asyncHandler(postController.listAllPublished.bind(postController)));
 router.get('/public/blogs/:blogSlug/posts', asyncHandler(postController.listPublished.bind(postController)));
 router.get('/public/blogs/:blogSlug/posts/:postSlug', asyncHandler(postController.getBySlug.bind(postController)));
 
@@ -106,6 +107,8 @@ router.post('/analytics/read-time', optionalAuthMiddleware, validate(trackReadTi
 router.get('/analytics/posts/:postId', authMiddleware, asyncHandler(analyticsController.getPostAnalytics.bind(analyticsController)));
 router.get('/analytics/blogs/:blogId', authMiddleware, asyncHandler(analyticsController.getBlogAnalytics.bind(analyticsController)));
 router.get('/analytics/dashboard', authMiddleware, asyncHandler(analyticsController.getDashboard.bind(analyticsController)));
+router.get('/dashboard/stats', authMiddleware, asyncHandler(analyticsController.getDashboardStats.bind(analyticsController)));
+router.get('/dashboard/activities', authMiddleware, asyncHandler(analyticsController.getDashboardActivities.bind(analyticsController)));
 
 // ============== Upload Routes ==============
 router.post('/blogs/:blogId/logo', authMiddleware, upload.single('file'), asyncHandler(uploadController.uploadBlogLogo.bind(uploadController)));

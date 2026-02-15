@@ -4,7 +4,8 @@ import {
     CreateReadTimeLogInput,
     PostAnalytics,
     BlogAnalytics,
-    AuthorDashboardAnalytics
+    AuthorDashboardAnalytics,
+    Activity
 } from '../../domain/entities/Analytics';
 
 export class AnalyticsUseCases {
@@ -42,6 +43,14 @@ export class AnalyticsUseCases {
 
     async getAuthorDashboard(userId: string): Promise<AuthorDashboardAnalytics> {
         return analyticsRepository.getAuthorDashboard(userId);
+    }
+
+    async getDashboardStats(userId: string): Promise<AuthorDashboardAnalytics> {
+        return this.getAuthorDashboard(userId);
+    }
+
+    async getDashboardActivities(userId: string): Promise<Activity[]> {
+        return analyticsRepository.getAuthorActivities(userId);
     }
 }
 

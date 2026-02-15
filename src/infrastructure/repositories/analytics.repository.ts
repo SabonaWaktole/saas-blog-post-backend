@@ -6,7 +6,8 @@ import {
     CreateReadTimeLogInput,
     PostAnalytics,
     BlogAnalytics,
-    AuthorDashboardAnalytics
+    AuthorDashboardAnalytics,
+    Activity
 } from '../../domain/entities/Analytics';
 import prisma from '../database/prisma';
 
@@ -148,6 +149,87 @@ export class PrismaAnalyticsRepository implements IAnalyticsRepository {
             totalPosts,
             blogBreakdown,
         };
+    }
+
+    async getAuthorActivities(userId: string): Promise<Activity[]> {
+        // 1. Get recent likes on user's posts
+        const recentLikes = await this.db.like.findMany({
+            where: {
+                post: {
+                    authorId: userId,
+                },
+                // Exclude own likes
+                NOT: {
+                    userId: userId
+                }
+            },
+            take: 20,
+            orderBy: {
+                createdAt: 'desc',
+            },
+            include: {
+                user: {
+                    include: {
+                        authorProfile: true,
+                    },
+                },
+                post: {
+                    select: {
+                        id: true,
+                        title: true,
+                    },
+                },
+            },
+        });
+
+        // 2. Get recent followers
+        const recentFollowers = await this.db.follow.findMany({
+            where: {
+                followingId: userId,
+            },
+            take: 20,
+            orderBy: {
+                createdAt: 'desc',
+            },
+            include: {
+                follower: {
+                    include: {
+                        authorProfile: true,
+                    },
+                },
+            },
+        });
+
+        // 3. Map to Activity interface
+        const likeActivities: Activity[] = recentLikes.map((like: any) => ({
+            id: like.id,
+            type: 'LIKE',
+            description: 'liked your post',
+            targetId: like.post.id,
+            targetTitle: like.post.title,
+            actorId: like.userId || 'anonymous',
+            actorName: like.user?.authorProfile?.name || like.user?.email || 'Anonymous', // Assuming name exists, fallback to email
+            actorAvatar: like.user?.authorProfile?.avatarUrl,
+            createdAt: like.createdAt,
+        }));
+
+        const followActivities: Activity[] = recentFollowers.map((follow: any) => ({
+            id: follow.id,
+            type: 'FOLLOW',
+            description: 'started following you',
+            targetId: userId,
+            actorId: follow.follower.id,
+            actorName: follow.follower.authorProfile?.name || follow.follower.email || 'Unknown User',
+            actorAvatar: follow.follower.authorProfile?.avatarUrl,
+            createdAt: follow.createdAt,
+        }));
+
+        // 4. Combine and sort
+        const allActivities = [...likeActivities, ...followActivities]
+            .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+            .slice(0, 20);
+
+        return allActivities;
     }
 }
 

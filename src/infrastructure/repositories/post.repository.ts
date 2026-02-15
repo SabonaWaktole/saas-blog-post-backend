@@ -125,6 +125,68 @@ export class PrismaPostRepository implements IPostRepository {
         return this.findByBlogId(blogId, options, { status: 'PUBLISHED' });
     }
 
+    async findAllPublished(
+        options: PaginationOptions,
+        filters?: PostFilterOptions
+    ): Promise<PaginatedResult<PostWithCounts>> {
+        const { page, limit } = options;
+        const skip = (page - 1) * limit;
+
+        const where: any = { status: 'PUBLISHED' };
+
+        if (filters?.categoryId) {
+            where.categories = { some: { categoryId: filters.categoryId } };
+        }
+        if (filters?.tagId) {
+            where.tags = { some: { tagId: filters.tagId } };
+        }
+        if (filters?.search) {
+            where.OR = [
+                { title: { contains: filters.search } },
+                { content: { contains: filters.search } },
+            ];
+        }
+
+        const [posts, total] = await Promise.all([
+            this.db.post.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: { publishedAt: 'desc' },
+                include: {
+                    _count: { select: { likes: true, bookmarks: true } },
+                    author: {
+                        select: {
+                            id: true,
+                            email: true,
+                            authorProfile: { select: { avatarUrl: true } }
+                        }
+                    },
+                    blog: {
+                        select: {
+                            id: true,
+                            title: true,
+                            slug: true,
+                            logoUrl: true
+                        }
+                    }
+                },
+            }),
+            this.db.post.count({ where }),
+        ]);
+
+        return {
+            data: posts.map(p => ({
+                ...toDomainPostWithCounts(p),
+                blog: p.blog // Include blog info for global feed context
+            })),
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit),
+        };
+    }
+
     async create(input: CreatePostInput): Promise<Post> {
         const post = await this.db.post.create({
             data: {

@@ -109,6 +109,23 @@ export class PostController {
         res.json(result);
     }
 
+    async listAllPublished(req: Request, res: Response): Promise<void> {
+        const { page, limit, search, categoryId } = req.query;
+
+        const options = {
+            page: parseInt(page as string) || 1,
+            limit: parseInt(limit as string) || 20,
+        };
+
+        const filters = {
+            search: search as string,
+            categoryId: categoryId as string,
+        };
+
+        const result = await postUseCases.listAllPublished(options, filters);
+        res.json(result);
+    }
+
     async getRelated(req: Request, res: Response): Promise<void> {
         const { id } = req.params;
         const limit = parseInt(req.query.limit as string) || 5;

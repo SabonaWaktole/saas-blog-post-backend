@@ -56,3 +56,15 @@ export interface AuthorDashboardAnalytics {
         postCount: number;
     }>;
 }
+
+export interface Activity {
+    id: string;
+    type: 'LIKE' | 'FOLLOW' | 'COMMENT' | 'BOOKMARK';
+    description: string;
+    targetId: string; // postId or userId
+    targetTitle?: string; // post title or user name
+    actorId: string;
+    actorName: string;
+    actorAvatar?: string; // Optional
+    createdAt: Date;
+}

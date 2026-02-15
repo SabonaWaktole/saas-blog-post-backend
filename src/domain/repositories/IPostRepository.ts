@@ -33,6 +33,10 @@ export interface IPostRepository {
         blogId: string,
         options: PaginationOptions
     ): Promise<PaginatedResult<PostWithCounts>>;
+    findAllPublished(
+        options: PaginationOptions,
+        filters?: PostFilterOptions
+    ): Promise<PaginatedResult<PostWithCounts>>;
     create(input: CreatePostInput): Promise<Post>;
     update(id: string, input: UpdatePostInput): Promise<Post>;
     updateStatus(id: string, status: PostStatus): Promise<Post>;
