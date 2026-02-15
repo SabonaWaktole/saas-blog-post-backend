@@ -44,6 +44,7 @@ app.use(errorMiddleware);
 
 // 404 handler
 app.use((req, res) => {
+    console.log(`\x1b[33m[WARN] Route not found: ${req.method} ${req.originalUrl}\x1b[0m`);
     res.status(404).json({ error: 'Not found' });
 });
 

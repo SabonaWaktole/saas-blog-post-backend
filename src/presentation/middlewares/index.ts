@@ -138,7 +138,10 @@ export function requestLogger(req: Request, res: Response, next: NextFunction): 
         const status = res.statusCode;
         const log = `[${new Date().toISOString()}] ${method} ${url} ${status} - ${duration}ms`;
 
-        if (status >= 400) {
+        if (status === 404) {
+            console.log(`\x1b[31m${log}\x1b[0m`);
+            console.log(`\x1b[33m[INFO] ☝️  404 Error: The requested resource was not found. If this is a specific ID, it might not exist in the database.\x1b[0m`);
+        } else if (status >= 400) {
             console.log(`\x1b[31m${log}\x1b[0m`); // Red for errors
         } else {
             console.log(`\x1b[32m${log}\x1b[0m`); // Green for success
