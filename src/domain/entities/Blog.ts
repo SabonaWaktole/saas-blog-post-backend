@@ -10,6 +10,7 @@ export interface Blog {
     ownerId: string;
     createdAt: Date;
     updatedAt: Date;
+    postCount?: number;
 }
 
 export interface CreateBlogInput {

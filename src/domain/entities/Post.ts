@@ -19,6 +19,8 @@ export interface Post {
     authorId: string;
     createdAt: Date;
     updatedAt: Date;
+    category?: string; // ID for frontend
+    tags?: string[]; // IDs for frontend
 }
 
 export interface CreatePostInput {
@@ -35,11 +37,13 @@ export interface CreatePostInput {
 }
 
 export interface UpdatePostInput {
+    slug?: string;
     title?: string;
     content?: string;
     excerpt?: string;
     coverImageUrl?: string;
     featured?: boolean;
+    status?: PostStatus;
     seoTitle?: string;
     seoDescription?: string;
 }

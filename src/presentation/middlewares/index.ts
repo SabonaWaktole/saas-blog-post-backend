@@ -109,11 +109,17 @@ export function postAuthorMiddleware(postIdParam: string = 'postId') {
 export function validate(schema: ZodSchema, source: 'body' | 'query' | 'params' = 'body') {
     return (req: Request, res: Response, next: NextFunction): void => {
         try {
+            if (source === 'body') {
+                console.log(`[VALIDATION-DEBUG] Validating ${req.method} ${req.url}`);
+                console.log(`[VALIDATION-DEBUG] Body:`, JSON.stringify(req.body, null, 2));
+            }
+
             const data = schema.parse(req[source]);
             req[source] = data; // Replace with parsed/coerced data
             next();
         } catch (error) {
             if (error instanceof ZodError) {
+                console.error('[VALIDATION-ERROR]', JSON.stringify(error.errors, null, 2));
                 res.status(400).json({
                     error: 'Validation failed',
                     details: error.errors.map(e => ({

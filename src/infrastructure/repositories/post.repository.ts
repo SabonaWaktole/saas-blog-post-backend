@@ -24,6 +24,7 @@ function toDomainPostWithCounts(p: any): PostWithCounts {
         author: p.author ? {
             id: p.author.id,
             email: p.author.email,
+            name: p.author.email.split('@')[0], // Fallback to email username since name is missing in schema
             avatarUrl: p.author.authorProfile?.avatarUrl ?? null,
         } : undefined,
     };
@@ -43,8 +44,21 @@ export class PrismaPostRepository implements IPostRepository {
     }
 
     async findById(id: string): Promise<Post | null> {
-        const post = await this.db.post.findUnique({ where: { id } });
-        return post ? toDomainPost(post) : null;
+        const post = await this.db.post.findUnique({
+            where: { id },
+            include: {
+                categories: true,
+                tags: true,
+            }
+        });
+        if (!post) return null;
+
+        const domainPost = toDomainPost(post);
+        return {
+            ...domainPost,
+            category: post.categories[0]?.categoryId,
+            tags: post.tags.map(t => t.tagId),
+        };
     }
 
     async findBySlug(blogId: string, slug: string): Promise<PostWithCounts | null> {

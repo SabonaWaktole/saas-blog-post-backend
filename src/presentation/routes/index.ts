@@ -58,6 +58,7 @@ router.delete('/blogs/:id', authMiddleware, asyncHandler(blogController.delete.b
 // Author routes (require auth)
 router.post('/blogs/:blogId/posts', authMiddleware, validate(createPostSchema), asyncHandler(postController.create.bind(postController)));
 router.get('/blogs/:blogId/posts', authMiddleware, asyncHandler(postController.listByBlog.bind(postController)));
+router.get('/blogs/:blogId/posts/:id', authMiddleware, asyncHandler(postController.getById.bind(postController)));
 router.put('/posts/:id', authMiddleware, validate(updatePostSchema), asyncHandler(postController.update.bind(postController)));
 router.patch('/posts/:id/publish', authMiddleware, asyncHandler(postController.publish.bind(postController)));
 router.patch('/posts/:id/archive', authMiddleware, asyncHandler(postController.archive.bind(postController)));

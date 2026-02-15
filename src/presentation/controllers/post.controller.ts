@@ -132,6 +132,30 @@ export class PostController {
         const posts = await postUseCases.getRelatedPosts(id, limit);
         res.json(posts);
     }
+    async getById(req: Request, res: Response): Promise<void> {
+        const { blogId, id } = req.params;
+        const userId = req.user!.userId;
+
+        // Use a use case that checks permissions if needed, or just fetch if owner/author
+        // For editing, we typically want the raw post data.
+        // Let's rely on repository finding it, and maybe check ownership if necessary.
+        // The repository findById doesn't check blogId, so we should probably verify it matches.
+
+        const post = await postUseCases.getById(id);
+
+        if (!post) {
+            res.status(404).json({ error: 'Post not found' });
+            return;
+        }
+
+        // Optional: specific check if post belongs to blog
+        if (post.blogId !== blogId) {
+            res.status(404).json({ error: 'Post not found in this blog' });
+            return;
+        }
+
+        res.json(post);
+    }
 }
 
 export const postController = new PostController();

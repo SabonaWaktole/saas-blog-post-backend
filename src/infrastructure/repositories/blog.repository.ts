@@ -20,10 +20,20 @@ export class PrismaBlogRepository implements IBlogRepository {
     }
 
     async findByOwnerId(ownerId: string): Promise<Blog[]> {
-        return this.db.blog.findMany({
+        const blogs = await this.db.blog.findMany({
             where: { ownerId },
+            include: {
+                _count: {
+                    select: { posts: true }
+                }
+            },
             orderBy: { createdAt: 'desc' },
         });
+
+        return blogs.map(b => ({
+            ...b,
+            postCount: b._count.posts
+        }));
     }
 
     async create(input: CreateBlogInput): Promise<Blog> {
